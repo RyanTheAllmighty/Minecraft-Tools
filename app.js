@@ -24,12 +24,19 @@ var dns = require('dns');
 var ping = require('mc-ping');
 var votifier = require('votifier-send');
 
+var env = require('node-env-file');
+env(__dirname + '/.env');
+
 var app = express();
 app.use(bodyParser.json());
 
 app.post('/query', function (req, res) {
-    if (!req.body || !req.body.host || !req.body.port || !req.body.id) {
+    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.auth) {
         return res.status(400).send('Invalid JSON provided!');
+    }
+
+    if (req.body.auth != process.env.AUTH_KEY) {
+        return res.status(400).send('Invalid auth provided!');
     }
 
     if (typeof req.body.id !== "number" || req.body.id < 0) {
@@ -87,8 +94,12 @@ app.post('/query', function (req, res) {
 });
 
 app.post('/vote', function (req, res) {
-    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.key || !req.body.username || !req.body.ip || !req.body.site) {
+    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.key || !req.body.username || !req.body.ip || !req.body.site || !req.body.auth) {
         return res.status(400).send('Invalid JSON provided!');
+    }
+
+    if (req.body.auth != process.env.AUTH_KEY) {
+        return res.status(400).send('Invalid auth provided!');
     }
 
     if (typeof req.body.id !== "number" || req.body.id < 0) {
@@ -121,7 +132,7 @@ app.post('/vote', function (req, res) {
     });
 });
 
-var server = app.listen(3000, function () {
+var server = app.listen(process.env.SERVER_PORT, function () {
     var host = server.address().address;
     var port = server.address().port;
 
