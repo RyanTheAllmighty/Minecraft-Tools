@@ -1,0 +1,23 @@
+{
+  "name": "Minecraft-Server-Checker",
+  "version": "1.0.0",
+  "description": "This is a small application written in NodeJS to check the status of a Minecraft server to see if it's online, how many players are online and more.",
+  "main": "app.js",
+  "dependencies": {
+    "mc-ping": "git://github.com/RyanTheAllmighty/mc-ping.git"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RyanTheAllmighty/Minecraft-Server-Checker.git"
+  },
+  "author": "RyanTheAllmighty",
+  "license": "GNU GPLv3",
+  "bugs": {
+    "url": "https://github.com/RyanTheAllmighty/Minecraft-Server-Checker/issues"
+  },
+  "homepage": "https://github.com/RyanTheAllmighty/Minecraft-Server-Checker"
+}
