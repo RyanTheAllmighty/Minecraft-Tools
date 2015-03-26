@@ -4,6 +4,8 @@
   "description": "This is a small application written in NodeJS to provide some tools for interacting with Minecraft servers, mainly being able to check the status of a Minecraft server to see if it's online, how many players are online as well as send off Votifier votes to servers.",
   "main": "app.js",
   "dependencies": {
+    "body-parser": "^1.12.2",
+    "express": "^4.12.3",
     "mc-ping": "git://github.com/RyanTheAllmighty/mc-ping.git"
   },
   "devDependencies": {},

@@ -17,14 +17,64 @@
  */
 
 var ping = require('mc-ping');
+var express = require('express');
+var bodyParser = require('body-parser');
 
-var host = 'us.mineplex.com';
-var port = 25565;
+var app = express();
+app.use(bodyParser.json());
 
-ping(host, port, function (err, data) {
-    if (err) {
-        console.error(err);
-    } else {
-        console.log(data);
+app.post('/query', function (req, res) {
+    if (!req.body || !req.body.host || !req.body.port || !req.body.id) {
+        return res.status(400).send('Invalid JSON provided!');
     }
-}, 5000);
+
+    if (typeof req.body.id !== "number" || req.body.id < 0) {
+        return res.status(400).send('Invalid id provided!');
+    }
+
+    if (typeof req.body.port !== "number" || req.body.port < 0 || req.body.port > 65535) {
+        return res.status(400).send('Invalid port provided!');
+    }
+
+    if (typeof req.body.timeout == "undefined" || typeof req.body.timeout !== "number") {
+        req.body.timeout = 3000;
+    }
+
+    console.log('Querying server ' + req.body.host + ":" + req.body.port);
+
+    var startTime = Date.now();
+    ping(req.body.host, req.body.port, function (err, data) {
+        if (err) {
+            console.error(err);
+            return res.status(200).send({
+                id: req.body.id,
+                host: req.body.host,
+                port: req.body.port,
+                online: false,
+                time_taken: Date.now() - startTime,
+                reason: err.message
+            });
+        } else {
+            console.log(data);
+            return res.status(200).send({
+                id: req.body.id,
+                host: req.body.host,
+                port: req.body.port,
+                online: true,
+                time_taken: Date.now() - startTime,
+                motd: data.server_name,
+                players: {
+                    online: data.num_players,
+                    max: data.max_players
+                }
+            });
+        }
+    }, req.body.timeout);
+});
+
+var server = app.listen(3000, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+
+    console.log('Listening at http://%s:%s', host, port);
+});
