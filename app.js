@@ -1,5 +1,5 @@
 /*
- * Minecraft Server Checker - https://github.com/RyanTheAllmighty/Minecraft-Server-Checker
+ * Minecraft Server Tools - https://github.com/RyanTheAllmighty/Minecraft-Server-Tools
  * Copyright (C) 2015 RyanTheAllmighty
  *
  * This program is free software: you can redistribute it and/or modify
