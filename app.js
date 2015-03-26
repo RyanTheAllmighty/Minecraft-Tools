@@ -84,8 +84,8 @@ app.post('/query', function (req, res) {
                     time_taken: Date.now() - startTime,
                     motd: data.server_name,
                     players: {
-                        online: data.num_players,
-                        max: data.max_players
+                        online: parseInt(data.num_players),
+                        max: parseInt(data.max_players)
                     }
                 });
             }
