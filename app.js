@@ -19,6 +19,7 @@
 var ping = require('mc-ping');
 var express = require('express');
 var bodyParser = require('body-parser');
+var dns = require('dns');
 
 var app = express();
 app.use(bodyParser.json());
@@ -42,34 +43,44 @@ app.post('/query', function (req, res) {
 
     console.log('Querying server ' + req.body.host + ":" + req.body.port);
 
-    var startTime = Date.now();
-    ping(req.body.host, req.body.port, function (err, data) {
-        if (err) {
-            console.error(err);
-            return res.status(200).send({
-                id: req.body.id,
-                host: req.body.host,
-                port: req.body.port,
-                online: false,
-                time_taken: Date.now() - startTime,
-                reason: err.message
-            });
-        } else {
-            console.log(data);
-            return res.status(200).send({
-                id: req.body.id,
-                host: req.body.host,
-                port: req.body.port,
-                online: true,
-                time_taken: Date.now() - startTime,
-                motd: data.server_name,
-                players: {
-                    online: data.num_players,
-                    max: data.max_players
-                }
-            });
+    dns.resolveSrv('_minecraft._tcp.' + req.body.host, function (err, data) {
+        var originalPort = req.body.port;
+
+        if (data && data[0] && data[0].port) {
+            console.log('The server has an SRV record for port ' + data[0].port + '!');
+            req.body.port = data[0].port;
         }
-    }, req.body.timeout);
+
+        var startTime = Date.now();
+
+        ping(req.body.host, req.body.port, function (err, data) {
+            if (err) {
+                console.error(err);
+                return res.status(200).send({
+                    id: req.body.id,
+                    host: req.body.host,
+                    port: originalPort,
+                    online: false,
+                    time_taken: Date.now() - startTime,
+                    reason: err.message
+                });
+            } else {
+                console.log(data);
+                return res.status(200).send({
+                    id: req.body.id,
+                    host: req.body.host,
+                    port: originalPort,
+                    online: true,
+                    time_taken: Date.now() - startTime,
+                    motd: data.server_name,
+                    players: {
+                        online: data.num_players,
+                        max: data.max_players
+                    }
+                });
+            }
+        }, req.body.timeout);
+    });
 });
 
 var server = app.listen(3000, function () {
