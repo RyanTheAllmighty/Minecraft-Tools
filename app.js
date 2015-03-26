@@ -16,10 +16,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var ping = require('mc-ping');
 var express = require('express');
 var bodyParser = require('body-parser');
+
 var dns = require('dns');
+
+var ping = require('mc-ping');
+var votifier = require('votifier-send');
 
 var app = express();
 app.use(bodyParser.json());
@@ -80,6 +83,41 @@ app.post('/query', function (req, res) {
                 });
             }
         }, req.body.timeout);
+    });
+});
+
+app.post('/vote', function (req, res) {
+    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.key || !req.body.username || !req.body.ip || !req.body.site) {
+        return res.status(400).send('Invalid JSON provided!');
+    }
+
+    if (typeof req.body.id !== "number" || req.body.id < 0) {
+        return res.status(400).send('Invalid id provided!');
+    }
+
+    if (typeof req.body.port !== "number" || req.body.port < 0 || req.body.port > 65535) {
+        return res.status(400).send('Invalid port provided!');
+    }
+
+    console.log('Sending votifier vote for ' + req.body.username + ' to ' + req.body.host + ":" + req.body.port);
+
+    votifier.send({
+        key: req.body.key,
+        host: req.body.host,
+        port: req.body.port,
+        data: {
+            user: req.body.username,
+            site: req.body.site,
+            addr: req.body.ip
+        }
+    }, function (err) {
+        if (err) {
+            console.error(err);
+        }
+
+        return res.status(200).send({
+            sent: !err
+        });
     });
 });
 
