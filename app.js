@@ -54,6 +54,7 @@ app.post('/query', function (req, res) {
     console.log('Querying server ' + req.body.host + ":" + req.body.port);
 
     dns.resolveSrv('_minecraft._tcp.' + req.body.host, function (err, data) {
+        var originalHost = req.body.host;
         var originalPort = req.body.port;
 
         if (data && data[0] && data[0].port) {
@@ -74,7 +75,7 @@ app.post('/query', function (req, res) {
                 console.error(err);
                 return res.status(200).send({
                     id: req.body.id,
-                    host: req.body.host,
+                    host: originalHost,
                     port: originalPort,
                     online: false,
                     time_taken: Date.now() - startTime,
@@ -84,7 +85,7 @@ app.post('/query', function (req, res) {
                 console.log(data);
                 return res.status(200).send({
                     id: req.body.id,
-                    host: req.body.host,
+                    host: originalHost,
                     port: originalPort,
                     online: true,
                     time_taken: Date.now() - startTime,
