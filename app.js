@@ -58,6 +58,12 @@ app.post('/query', function (req, res) {
 
         if (data && data[0] && data[0].port) {
             console.log('The server has an SRV record for port ' + data[0].port + '!');
+
+            if (data[0].name) {
+                console.log('The server also has an SRV record for host ' + data[0].name + '!');
+                req.body.host = data[0].name;
+            }
+
             req.body.port = data[0].port;
         }
 
