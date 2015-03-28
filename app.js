@@ -67,12 +67,6 @@ app.post('/query', function (req, res) {
         return res.status(400).send('Invalid JSON provided!');
     }
 
-    if (process.env.ENABLE_SENTRY) {
-        client.captureMessage('Querying server ' + req.body.host + ":" + req.body.port)
-    } else {
-        console.log(data);
-    }
-
     dns.resolveSrv('_minecraft._tcp.' + req.body.host, function (err, data) {
         var originalHost = req.body.host;
         var originalPort = req.body.port;
