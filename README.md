@@ -38,6 +38,8 @@ To get a Minecraft servers details simply send a post request to 'host:port/quer
 
 This should all be self explanatory except for the id element. This is used for any sort of internal use you may have, such as uniquely identifying the server you're querying, as the response also sends back that same id.
 
+You may also provide an optional timeout value to the JSON sent to the server which is an integer > 0 of the time it should wait to try to connect and get the information from the server in milliseconds.
+
 The response sent back will look like the following:
 
 ```
