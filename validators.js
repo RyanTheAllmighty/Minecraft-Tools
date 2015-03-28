@@ -16,7 +16,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 var validator = require('is-my-json-valid');
 
 exports.queryValidator = validator({
