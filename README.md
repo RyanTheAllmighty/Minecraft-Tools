@@ -13,6 +13,12 @@ This is the port that Node will use to accept requests on.
 #### AUTH_KEY
 This is a auth key which must be provided on each request in order to process things. This can be anything you want, as long as it matches that which you send in your request.
 
+#### ENABLE_SENTRY
+This is a boolean value (true or false) on if we should log all errors to a Sentry server or not.
+
+#### SENTRY_DSN
+This is the DSN url for the Sentry server to send all errors to.
+
 ### Sending Requests
 This tool can currently do 2 things. Get details about a Minecraft server and send off votes to a Votifier enabled server. For details on each see below.
 
