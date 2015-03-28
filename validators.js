@@ -88,11 +88,6 @@ exports.voteValidator = validator({
         site: {
             required: true,
             type: 'string'
-        },
-        timeout: {
-            required: false,
-            type: 'integer',
-            minimum: 1
         }
     }
 });
