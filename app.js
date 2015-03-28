@@ -24,31 +24,26 @@ var dns = require('dns');
 var ping = require('mc-ping');
 var votifier = require('votifier-send');
 
+
 var env = require('node-env-file');
 env(__dirname + '/.env');
 
 var app = express();
 app.use(bodyParser.json());
 
-app.post('/query', function (req, res) {
-    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.auth) {
-        return res.status(400).send('Invalid JSON provided!');
-    }
+var validators = require('./validators');
 
+app.use(function (req, res, next) {
     if (req.body.auth != process.env.AUTH_KEY) {
         return res.status(400).send('Invalid auth provided!');
     }
 
-    if (typeof req.body.id !== "number" || req.body.id < 0) {
-        return res.status(400).send('Invalid id provided!');
-    }
+    next();
+});
 
-    if (typeof req.body.port !== "number" || req.body.port < 0 || req.body.port > 65535) {
-        return res.status(400).send('Invalid port provided!');
-    }
-
-    if (typeof req.body.timeout == "undefined" || typeof req.body.timeout !== "number") {
-        req.body.timeout = 3000;
+app.post('/query', function (req, res) {
+    if (!validators.queryValidator(req.body)) {
+        return res.status(400).send('Invalid JSON provided!');
     }
 
     console.log('Querying server ' + req.body.host + ":" + req.body.port);
@@ -101,20 +96,8 @@ app.post('/query', function (req, res) {
 });
 
 app.post('/vote', function (req, res) {
-    if (!req.body || !req.body.host || !req.body.port || !req.body.id || !req.body.key || !req.body.username || !req.body.ip || !req.body.site || !req.body.auth) {
+    if (!validators.voteValidator(req.body)) {
         return res.status(400).send('Invalid JSON provided!');
-    }
-
-    if (req.body.auth != process.env.AUTH_KEY) {
-        return res.status(400).send('Invalid auth provided!');
-    }
-
-    if (typeof req.body.id !== "number" || req.body.id < 0) {
-        return res.status(400).send('Invalid id provided!');
-    }
-
-    if (typeof req.body.port !== "number" || req.body.port < 0 || req.body.port > 65535) {
-        return res.status(400).send('Invalid port provided!');
     }
 
     console.log('Sending votifier vote for ' + req.body.username + ' to ' + req.body.host + ":" + req.body.port);
