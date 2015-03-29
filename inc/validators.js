@@ -100,6 +100,10 @@ exports.uuidValidator = {
                 required: true,
                 type: 'string'
             },
+            force: {
+                required: false,
+                type: 'boolean'
+            },
             username: {
                 required: true,
                 type: 'string'
@@ -113,6 +117,10 @@ exports.uuidValidator = {
             auth: {
                 required: true,
                 type: 'string'
+            },
+            force: {
+                required: false,
+                type: 'boolean'
             },
             uuid: {
                 required: true,

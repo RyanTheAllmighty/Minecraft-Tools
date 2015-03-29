@@ -19,6 +19,7 @@
 var express = require('express');
 var router = express.Router();
 var validators = require('./validators');
+var functions = require('./functions');
 var dns = require('dns');
 var ping = require('mc-ping');
 var mojang = require('mojang-api');
@@ -139,54 +140,49 @@ router.route('/uuid/to').post(function (req, res) {
         return res.status(400).send('Invalid JSON provided!');
     }
 
-    r.table('uuid').filter({username: req.body.username}).run(req._rdb, function (err, cursor) {
-        if (err) {
-            if (process.env.ENABLE_SENTRY) {
-                client.captureError(err)
-            } else {
-                console.error(err);
-            }
-
-            return res.status(400).send('Error retrieving results from the database!');
-        }
-
-        cursor.next(function (err, row) {
-            if (err) {
-                mojang.nameToUuid(req.body.username, function (err, data) {
-                    if (err) {
-                        if (process.env.ENABLE_SENTRY) {
-                            client.captureError(err)
-                        } else {
-                            console.error(err);
-                        }
-
-                        return res.status(400).send('Couldn\'t get UUID for username!');
+    functions.usernameInUUIDTable(req.body.username, req._rdb, function (err, uuid) {
+        if (err || req.body.force) {
+            mojang.nameToUuid(req.body.username, function (err1, data) {
+                if (err1) {
+                    if (process.env.ENABLE_SENTRY) {
+                        client.captureError(err1)
+                    } else {
+                        console.error(err1);
                     }
 
-                    if (data.length == 0) {
-                        return res.status(200).send({
-                            uuid: null,
-                            fetched: true
-                        });
-                    }
+                    return res.status(400).send('Couldn\'t get UUID for username!');
+                }
 
+                if (data.length == 0) {
+                    return res.status(200).send({
+                        uuid: null,
+                        fetched: true
+                    });
+                }
+
+                // If !err then the username exsits in the table but we're forcing the lookup so wan't to update and not insert
+                if (!err) {
+                    r.table('uuid').filter({username: req.body.username}).update({
+                        uuid: data[0].id
+                    }).run(req._rdb);
+                } else {
                     r.table('uuid').insert({
                         uuid: data[0].id,
                         username: req.body.username
                     }).run(req._rdb);
+                }
 
-                    return res.status(200).send({
-                        uuid: data[0].id,
-                        fetched: true
-                    });
-                });
-            } else {
                 return res.status(200).send({
-                    uuid: row.uuid,
-                    fetched: false
+                    uuid: data[0].id,
+                    fetched: true
                 });
-            }
-        });
+            });
+        } else {
+            return res.status(200).send({
+                uuid: uuid,
+                fetched: false
+            });
+        }
     });
 });
 

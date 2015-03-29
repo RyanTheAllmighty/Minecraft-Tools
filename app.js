@@ -64,11 +64,20 @@ r.connect({
             console.log('Created the minecraft_tools database!');
         }
     });
+
     r.db('minecraft_tools').tableCreate('uuid').run(conn, function (err) {
         if (err) {
             console.log('uuid table already exists, no need to create it!');
         } else {
             console.log('Created the uuid table!');
+        }
+    });
+
+    r.db('minecraft_tools').table('uuid').indexCreate('username').run(conn, function (err) {
+        if (err) {
+            console.log('username already an index, no need to add it!');
+        } else {
+            console.log('Added the username as an index!');
         }
     });
 
