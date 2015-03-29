@@ -239,6 +239,13 @@ app.route('/uuid/to').post(function (req, res) {
                         return res.status(400).send('Couldn\'t get UUID for username!');
                     }
 
+                    if (data.length == 0) {
+                        return res.status(200).send({
+                            uuid: null,
+                            fetched: true
+                        });
+                    }
+
                     r.table('uuid').insert({
                         uuid: data[0].id,
                         username: req.body.username
