@@ -1,5 +1,5 @@
 /*
- * Minecraft Server Tools - https://github.com/RyanTheAllmighty/Minecraft-Server-Tools
+ * Minecraft Tools - https://github.com/RyanTheAllmighty/Minecraft-Tools
  * Copyright (C) 2015 RyanTheAllmighty
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,6 +33,7 @@ env(__dirname + '/.env');
 
 var app = express();
 app.use(bodyParser.json());
+app.use('/', require('./routes'));
 
 var validators = require('./validators');
 
@@ -71,6 +72,8 @@ r.connect({
         }
     });
 
+    startServer();
+
     conn.close();
 });
 
@@ -90,7 +93,20 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.post('/query', function (req, res) {
+app.use(function (req, res, next) {
+    r.connect({
+        host: process.env.RETHINKDB_HOST,
+        port: process.env.RETHINKDB_PORT,
+        db: process.env.RETHINKDB_DB
+    }).then(function (conn) {
+        req._rdb = conn;
+        next();
+    }).error(function (res) {
+        return res.status(400).send('Couldn\'t connect to the database!');
+    });
+});
+
+app.route('/query').post(function (req, res) {
     if (!validators.queryValidator(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
@@ -151,7 +167,7 @@ app.post('/query', function (req, res) {
     });
 });
 
-app.post('/vote', function (req, res) {
+app.route('/vote').post(function (req, res) {
     if (!validators.voteValidator(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
@@ -186,7 +202,7 @@ app.post('/vote', function (req, res) {
     });
 });
 
-app.post('/uuid/to', function (req, res) {
+app.route('/uuid/to').post(function (req, res) {
     if (!validators.uuidValidator.to(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
@@ -198,11 +214,8 @@ app.post('/uuid/to', function (req, res) {
 
         return res.status(400).send('Invalid JSON provided!');
     }
-    r.connect({
-        host: process.env.RETHINKDB_HOST,
-        port: process.env.RETHINKDB_PORT,
-        db: process.env.RETHINKDB_DB
-    }, function (err, conn) {
+
+    r.table('uuid').filter({username: req.body.username}).run(req._rdb, function (err, cursor) {
         if (err) {
             if (process.env.ENABLE_SENTRY) {
                 client.captureError(err)
@@ -210,57 +223,52 @@ app.post('/uuid/to', function (req, res) {
                 console.error(err);
             }
 
-            return res.status(400).send('Error connecting to the database!');
+            return res.status(400).send('Error retrieving results from the database!');
         }
 
-        r.table('uuid').filter({username: req.body.username}).run(conn, function (err, cursor) {
+        cursor.next(function (err, row) {
             if (err) {
-                if (process.env.ENABLE_SENTRY) {
-                    client.captureError(err)
-                } else {
-                    console.error(err);
-                }
-
-                return res.status(400).send('Error retrieving results from the database!');
-            }
-
-            cursor.next(function (err, row) {
-                if (err) {
-                    mojang.nameToUuid(req.body.username, function (err, data) {
-                        if (err) {
-                            if (process.env.ENABLE_SENTRY) {
-                                client.captureError(err)
-                            } else {
-                                console.error(err);
-                            }
-
-                            return res.status(400).send('Couldn\'t get UUID for username!');
+                mojang.nameToUuid(req.body.username, function (err, data) {
+                    if (err) {
+                        if (process.env.ENABLE_SENTRY) {
+                            client.captureError(err)
+                        } else {
+                            console.error(err);
                         }
 
-                        r.table('uuid').insert({
-                            uuid: data[0].id,
-                            username: req.body.username
-                        }).run(conn);
+                        return res.status(400).send('Couldn\'t get UUID for username!');
+                    }
 
-                        return res.status(200).send({
-                            uuid: data[0].id,
-                            fetched: true
-                        });
-                    });
-                } else {
+                    r.table('uuid').insert({
+                        uuid: data[0].id,
+                        username: req.body.username
+                    }).run(req._rdb);
+
                     return res.status(200).send({
-                        uuid: row.uuid,
-                        fetched: false
+                        uuid: data[0].id,
+                        fetched: true
                     });
-                }
-            });
+                });
+            } else {
+                return res.status(200).send({
+                    uuid: row.uuid,
+                    fetched: false
+                });
+            }
         });
     });
 });
 
-var server = app.listen(process.env.SERVER_PORT, function () {
-    var host = server.address().address;
-    var port = server.address().port;
-
-    console.log('Listening at http://%s:%s', host, port);
+app.use(function (req, res, next) {
+    req._rdb.close();
+    next();
 });
+
+var startServer = function () {
+    var server = app.listen(process.env.SERVER_PORT, function () {
+        var host = server.address().address;
+        var port = server.address().port;
+
+        console.log('Listening at http://%s:%s', host, port);
+    });
+};
