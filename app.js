@@ -24,6 +24,10 @@ var dns = require('dns');
 var ping = require('mc-ping');
 var votifier = require('votifier-send');
 
+var r = require('rethinkdb');
+
+var mojang = require('mojang-api');
+
 var env = require('node-env-file');
 env(__dirname + '/.env');
 
@@ -37,6 +41,38 @@ if (process.env.ENABLE_SENTRY) {
 
     var client = new raven.Client(process.env.SENTRY_DSN);
 }
+
+r.connect({
+    host: process.env.RETHINKDB_HOST,
+    port: process.env.RETHINKDB_PORT
+}, function (err, conn) {
+    if (err) {
+        if (process.env.ENABLE_SENTRY) {
+            client.captureError(err)
+        } else {
+            console.error(err);
+        }
+
+        return;
+    }
+
+    r.dbCreate('minecraft_tools').run(conn, function (err) {
+        if (err) {
+            console.log('minecraft_tools database already exists, no need to create it!');
+        } else {
+            console.log('Created the minecraft_tools database!');
+        }
+    });
+    r.db('minecraft_tools').tableCreate('uuid').run(conn, function (err) {
+        if (err) {
+            console.log('uuid table already exists, no need to create it!');
+        } else {
+            console.log('Created the uuid table!');
+        }
+    });
+
+    conn.close();
+});
 
 app.use(function (req, res, next) {
     if (req.body.auth != process.env.AUTH_KEY) {
@@ -146,6 +182,78 @@ app.post('/vote', function (req, res) {
 
         return res.status(200).send({
             sent: !err
+        });
+    });
+});
+
+app.post('/uuid/to', function (req, res) {
+    if (!validators.uuidValidator.to(req.body)) {
+        var err = new Error('Invalid JSON provided!');
+
+        if (process.env.ENABLE_SENTRY) {
+            client.captureError(err, {extra: {body: res.body}});
+        } else {
+            console.error(err);
+        }
+
+        return res.status(400).send('Invalid JSON provided!');
+    }
+    r.connect({
+        host: process.env.RETHINKDB_HOST,
+        port: process.env.RETHINKDB_PORT,
+        db: process.env.RETHINKDB_DB
+    }, function (err, conn) {
+        if (err) {
+            if (process.env.ENABLE_SENTRY) {
+                client.captureError(err)
+            } else {
+                console.error(err);
+            }
+
+            return res.status(400).send('Error connecting to the database!');
+        }
+
+        r.table('uuid').filter({username: req.body.username}).run(conn, function (err, cursor) {
+            if (err) {
+                if (process.env.ENABLE_SENTRY) {
+                    client.captureError(err)
+                } else {
+                    console.error(err);
+                }
+
+                return res.status(400).send('Error retrieving results from the database!');
+            }
+
+            cursor.next(function (err, row) {
+                if (err) {
+                    mojang.nameToUuid(req.body.username, function (err, data) {
+                        if (err) {
+                            if (process.env.ENABLE_SENTRY) {
+                                client.captureError(err)
+                            } else {
+                                console.error(err);
+                            }
+
+                            return res.status(400).send('Couldn\'t get UUID for username!');
+                        }
+
+                        r.table('uuid').insert({
+                            uuid: data[0].id,
+                            username: req.body.username
+                        }).run(conn);
+
+                        return res.status(200).send({
+                            uuid: data[0].id,
+                            fetched: true
+                        });
+                    });
+                } else {
+                    return res.status(200).send({
+                        uuid: row.uuid,
+                        fetched: false
+                    });
+                }
+            });
         });
     });
 });

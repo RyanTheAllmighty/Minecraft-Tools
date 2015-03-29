@@ -4,6 +4,9 @@
 ### What is it?
 This is a small application written in NodeJS to provide some tools for interacting with Minecraft servers, mainly being able to check the status of a Minecraft server to see if it's online, how many players are online as well as send off Votifier votes to servers.
 
+### Prerequisites
+The use of this application REQUIRES [RethinkDB](http://rethinkdb.com/) to be installed and configured in your .env file.
+
 ### Setting Up
 To set things up simply make a copy of the .env.example file and name it .env and change anything in there that you want. An explanation of each element is below:
 
@@ -18,6 +21,15 @@ This is a boolean value (true or false) on if we should log all errors to a Sent
 
 #### SENTRY_DSN
 This is the DSN url for the Sentry server to send all errors to.
+
+#### RETHINKDB_HOST
+This is the host that the RethinkDB instance is listening on.
+
+#### RETHINKDB_PORT
+This is the port that the RethinkDB instance is listening on.
+
+#### RETHINKDB_DB
+This is the database name to use for all data used by this application in RethinkDB.
 
 ### Sending Requests
 This tool can currently do 2 things. Get details about a Minecraft server and send off votes to a Votifier enabled server. For details on each see below.

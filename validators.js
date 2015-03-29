@@ -90,3 +90,34 @@ exports.voteValidator = validator({
         }
     }
 });
+
+exports.uuidValidator = {
+    to: validator({
+        required: true,
+        type: 'object',
+        properties: {
+            auth: {
+                required: true,
+                type: 'string'
+            },
+            username: {
+                required: true,
+                type: 'string'
+            }
+        }
+    }),
+    from: validator({
+        required: true,
+        type: 'object',
+        properties: {
+            auth: {
+                required: true,
+                type: 'string'
+            },
+            uuid: {
+                required: true,
+                type: 'string'
+            }
+        }
+    })
+};
