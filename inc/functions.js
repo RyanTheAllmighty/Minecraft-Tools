@@ -16,7 +16,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var mojang = require('mojang-api');
 var r = require('rethinkdb');
 
 exports.usernameInUUIDTable = function (username, connection, callback) {
@@ -30,6 +29,22 @@ exports.usernameInUUIDTable = function (username, connection, callback) {
                 callback(new Error('Username doesn\'t exist in the UUID table!'));
             } else {
                 callback(null, row.uuid);
+            }
+        });
+    });
+};
+
+exports.uuidInUUIDTable = function (uuid, connection, callback) {
+    r.table('uuid').filter({uuid: uuid}).run(connection, function (err, cursor) {
+        if (err) {
+            callback(err);
+        }
+
+        cursor.next(function (err, row) {
+            if (err) {
+                callback(new Error('UUID doesn\'t exist in the UUID table!'));
+            } else {
+                callback(null, row.username);
             }
         });
     });

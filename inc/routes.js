@@ -168,7 +168,7 @@ router.route('/uuid/to').post(function (req, res) {
                 } else {
                     r.table('uuid').insert({
                         uuid: data[0].id,
-                        username: req.body.username
+                        username: data[0].name
                     }).run(req._rdb);
                 }
 
@@ -180,6 +180,65 @@ router.route('/uuid/to').post(function (req, res) {
         } else {
             return res.status(200).send({
                 uuid: uuid,
+                fetched: false
+            });
+        }
+    });
+});
+
+router.route('/uuid/from').post(function (req, res) {
+    if (!validators.uuidValidator.from(req.body)) {
+        var err = new Error('Invalid JSON provided!');
+
+        if (process.env.ENABLE_SENTRY) {
+            client.captureError(err, {extra: {body: res.body}});
+        } else {
+            console.error(err);
+        }
+
+        return res.status(400).send('Invalid JSON provided!');
+    }
+
+    functions.uuidInUUIDTable(req.body.uuid, req._rdb, function (err, username) {
+        if (err || req.body.force) {
+            mojang.profile(req.body.uuid, function (err1, data) {
+                if (err1) {
+                    if (process.env.ENABLE_SENTRY) {
+                        client.captureError(err1)
+                    } else {
+                        console.error(err1);
+                    }
+
+                    return res.status(400).send('Couldn\'t get username for UUID!');
+                }
+
+                if (data.length == 0) {
+                    return res.status(200).send({
+                        uuid: null,
+                        fetched: true
+                    });
+                }
+
+                // If !err then the username exsits in the table but we're forcing the lookup so wan't to update and not insert
+                if (!err) {
+                    r.table('uuid').filter({uuid: req.body.uuid}).update({
+                        uuid: data.name
+                    }).run(req._rdb);
+                } else {
+                    r.table('uuid').insert({
+                        uuid: data.id,
+                        username: data.name
+                    }).run(req._rdb);
+                }
+
+                return res.status(200).send({
+                    username: data.name,
+                    fetched: true
+                });
+            });
+        } else {
+            return res.status(200).send({
+                username: username,
                 fetched: false
             });
         }
