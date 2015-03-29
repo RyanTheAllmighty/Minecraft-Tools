@@ -1,8 +1,8 @@
-# Minecraft Server Tools
+Minecraft Tools
 ====================================
 
 ### What is it?
-This is a small application written in NodeJS to provide some tools for interacting with Minecraft servers, mainly being able to check the status of a Minecraft server to see if it's online, how many players are online as well as send off Votifier votes to servers.
+This is a small application written in NodeJS to provide some tools for interacting with Minecraft things such as Servers for querying them and interacting with the Mojang API for getting information about Minecraft users and more.
 
 ### Prerequisites
 The use of this application REQUIRES [RethinkDB](http://rethinkdb.com/) to be installed and configured in your .env file.

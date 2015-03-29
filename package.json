@@ -1,7 +1,7 @@
 {
-  "name": "Minecraft-Server-Tools",
+  "name": "Minecraft-Tools",
   "version": "1.0.0",
-  "description": "This is a small application written in NodeJS to provide some tools for interacting with Minecraft servers, mainly being able to check the status of a Minecraft server to see if it's online, how many players are online as well as send off Votifier votes to servers.",
+  "description": "This is a small application written in NodeJS to provide some tools for interacting with Minecraft things such as Servers for querying them and interacting with the Mojang API for getting information about Minecraft users and more.",
   "main": "app.js",
   "dependencies": {
     "body-parser": "^1.12.2",
@@ -20,12 +20,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/RyanTheAllmighty/Minecraft-Server-Tools.git"
+    "url": "https://github.com/RyanTheAllmighty/Minecraft-Tools.git"
   },
   "author": "RyanTheAllmighty",
   "license": "GNU GPLv3",
   "bugs": {
-    "url": "https://github.com/RyanTheAllmighty/Minecraft-Server-Tools/issues"
+    "url": "https://github.com/RyanTheAllmighty/Minecraft-Tools/issues"
   },
-  "homepage": "https://github.com/RyanTheAllmighty/Minecraft-Server-Tools"
+  "homepage": "https://github.com/RyanTheAllmighty/Minecraft-Tools"
 }
