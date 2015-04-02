@@ -23,6 +23,10 @@ exports.checkAuthKey = function (req, res, next) {
         var err = new Error('Invalid auth provided!');
 
         if (process.env.ENABLE_SENTRY) {
+            var raven = require('raven');
+
+            var client = new raven.Client(process.env.SENTRY_DSN);
+
             client.captureError(err, {extra: {body: res.body}});
         } else {
             console.error(err);

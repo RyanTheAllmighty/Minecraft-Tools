@@ -19,8 +19,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-var votifier = require('votifier-send');
-
 var r = require('rethinkdb');
 var middleware = require('./inc/middlewares');
 
