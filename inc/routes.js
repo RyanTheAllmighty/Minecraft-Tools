@@ -219,7 +219,7 @@ router.route('/uuid/from').post(function (req, res) {
                     });
                 }
 
-                // If !err then the username exsits in the table but we're forcing the lookup so wan't to update and not insert
+                // If !err then the username exists in the table but we're forcing the lookup so we want to update and not insert
                 if (!err) {
                     r.table('uuid').filter({uuid: req.body.uuid}).update({
                         uuid: data.name
