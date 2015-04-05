@@ -51,10 +51,9 @@ module.exports = function (server, port, callback, timeout) {
         buf.appendBuffer(varint.encode(buffer.length, new Buffer(varint.encodingLength(buffer.length))));
         buf.appendBuffer(buffer.get());
 
-        socket.write(buf.get());
-        socket.write(buff);
-
-        socket.end();
+        socket.write(buf.get(), function () {
+            socket.write(buff);
+        });
     });
 
     socket.setTimeout(timeout, function () {
@@ -68,21 +67,30 @@ module.exports = function (server, port, callback, timeout) {
 
     socket.on('data', function (data) {
         bufData.appendBuffer(data);
+
+        // Check for the end of the data being 2 } and then close the socket
+        if (data[data.length - 1] == 125 && data[data.length - 2] == 125) {
+            socket.end();
+        }
     });
 
-    socket.once('end', function (e) {
+    socket.once('end', function () {
         if (bufData.get().length == 0) {
             return callback(new Error('Server didn\'t respond with any data!'));
         }
 
+        // Bytes we've read so far.
         var bytes = 0;
 
+        // The entire length of the data received.
         var length = varint.decode(bufData.get());
         bytes += varint.decode.bytes;
 
+        // The type of response it is. 0 is for status response.
         var type = varint.decode(bufData.get(), bytes);
         bytes += varint.decode.bytes;
 
+        // The length of the next portion of data which is the response data. This is unused.
         var length2 = varint.decode(bufData.get(), bytes);
         bytes += varint.decode.bytes;
 
@@ -90,7 +98,14 @@ module.exports = function (server, port, callback, timeout) {
             callback(new Error('Server responded with an invalid status response!'));
         }
 
-        callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
+        try {
+            callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
+        } catch (e) {
+            //console.log(bufData.get().toString('utf8', bytes));
+            console.log(server + ":" + port);
+            console.error(e);
+            callback(e);
+        }
     });
 
     socket.once('error', function (e) {
