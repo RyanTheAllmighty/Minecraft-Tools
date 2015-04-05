@@ -22,6 +22,7 @@ var validators = require('./validators');
 var functions = require('./functions');
 var dns = require('dns');
 var ping = require('mc-ping');
+var altping = require('./altping');
 var mojang = require('mojang-api');
 var r = require('rethinkdb');
 
@@ -58,35 +59,79 @@ router.route('/query').post(function (req, res) {
 
         var startTime = Date.now();
 
-        ping(req.body.host, req.body.port, function (err, data) {
-            if (err) {
-                if (process.env.ENABLE_SENTRY) {
-                    client.captureError(err)
-                } else {
-                    console.error(err);
-                }
-
+        setTimeout(function () {
+            console.error(new Error('Timeout occured while trying to ping server!'));
+            if (!res.headersSent) {
                 return res.status(200).send({
                     id: req.body.id,
                     host: originalHost,
                     port: originalPort,
                     online: false,
                     time_taken: Date.now() - startTime,
-                    reason: err.message
+                    reason: "Timeout occurred!"
                 });
-            } else {
-                return res.status(200).send({
-                    id: req.body.id,
-                    host: originalHost,
-                    port: originalPort,
-                    online: true,
-                    time_taken: Date.now() - startTime,
-                    motd: data.server_name,
-                    players: {
-                        online: parseInt(data.num_players),
-                        max: parseInt(data.max_players)
+            }
+        }, (req.body.timeout || 5000) * 2);
+
+        altping(req.body.host, req.body.port, function (err, data) {
+            if (err) {
+                console.error(new Error('Error pinging using 1.7 method!'));
+
+                startTime = Date.now();
+
+                ping(req.body.host, req.body.port, function (err1, data1) {
+                    if (err1) {
+                        if (process.env.ENABLE_SENTRY) {
+                            client.captureError(err1)
+                        } else {
+                            console.error(err1);
+                        }
+
+                        if (!res.headersSent) {
+                            return res.status(200).send({
+                                id: req.body.id,
+                                host: originalHost,
+                                port: originalPort,
+                                online: false,
+                                time_taken: Date.now() - startTime,
+                                reason: err1.message,
+                                new_method: false
+                            });
+                        }
+                    } else {
+                        if (!res.headersSent) {
+                            return res.status(200).send({
+                                id: req.body.id,
+                                host: originalHost,
+                                port: originalPort,
+                                online: true,
+                                time_taken: Date.now() - startTime,
+                                motd: data1.server_name,
+                                players: {
+                                    online: parseInt(data1.num_players),
+                                    max: parseInt(data1.max_players)
+                                },
+                                new_method: false
+                            });
+                        }
                     }
-                });
+                }, req.body.timeout);
+            } else {
+                if (!res.headersSent) {
+                    return res.status(200).send({
+                        id: req.body.id,
+                        host: originalHost,
+                        port: originalPort,
+                        online: true,
+                        time_taken: Date.now() - startTime,
+                        motd: data.description,
+                        players: {
+                            online: parseInt(data.players.online),
+                            max: parseInt(data.players.max)
+                        },
+                        new_method: true
+                    });
+                }
             }
         }, req.body.timeout);
     });
@@ -121,9 +166,11 @@ router.route('/vote').post(function (req, res) {
             }
         }
 
-        return res.status(200).send({
-            sent: !err
-        });
+        if (!res.headersSent) {
+            return res.status(200).send({
+                sent: !err
+            });
+        }
     });
 });
 

@@ -1,8 +1,20 @@
-/**
- * mc-ping
- * Copyright (c) 2013 David White
- * MIT Licensed
- **/
+/*
+ * Minecraft Tools - https://github.com/RyanTheAllmighty/Minecraft-Tools
+ * Copyright (C) 2015 RyanTheAllmighty
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 var net = require("net");
 
@@ -10,14 +22,15 @@ var BufferBuilder = require('buffer-builder');
 
 var varint = require('varint');
 
-var ping = function (server, port, callback) {
+module.exports = function (server, port, callback, timeout) {
+    if (typeof timeout == "undefined") {
+        timeout = 3000;
+    }
 
     var socket = net.connect({
         host: server,
         port: port
-    });
-
-    socket.once('connect', function () {
+    }, function () {
         var buffer = new BufferBuilder();
         buffer.appendFill(0x00, 1);
         buffer.appendBuffer(varint.encode(4, new Buffer(varint.encodingLength(4))));
@@ -44,6 +57,13 @@ var ping = function (server, port, callback) {
         socket.end();
     });
 
+    socket.setTimeout(timeout, function () {
+        callback(new Error("Socket timed out when connecting to " + server + ":" + port));
+
+        socket.end();
+        socket.destroy();
+    });
+
     var bufData = new BufferBuilder();
 
     socket.on('data', function (data) {
@@ -51,6 +71,10 @@ var ping = function (server, port, callback) {
     });
 
     socket.once('end', function (e) {
+        if (bufData.get().length == 0) {
+            return callback(new Error('Server didn\'t respond with any data!'));
+        }
+
         var bytes = 0;
 
         var length = varint.decode(bufData.get());
@@ -70,22 +94,6 @@ var ping = function (server, port, callback) {
     });
 
     socket.once('error', function (e) {
-        if (callback !== undefined) {
-            callback(e);
-        }
-    });
-
-    socket.setTimeout(5000, function () {
-        console.error(new Error("Socket timed out when connecting to " + server + ":" + port));
-        socket.end();
-        socket.destroy();
+        callback(e);
     });
 };
-
-ping("192.95.49.168", 25565, function (err, data) {
-    if (err) {
-        return console.error(err);
-    }
-
-    console.log(data.description);
-});
