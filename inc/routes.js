@@ -60,8 +60,9 @@ router.route('/query').post(function (req, res) {
         var startTime = Date.now();
 
         setTimeout(function () {
-            console.error(new Error('Timeout occured while trying to ping server!'));
             if (!res.headersSent) {
+                console.error(new Error('Timeout occured while trying to ping server!'));
+                
                 return res.status(200).send({
                     id: req.body.id,
                     host: originalHost,
