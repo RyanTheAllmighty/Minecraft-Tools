@@ -61,8 +61,14 @@ router.route('/query').post(function (req, res) {
 
         setTimeout(function () {
             if (!res.headersSent) {
-                console.error(new Error('Timeout occured while trying to ping server!'));
-                
+                var error = new Error('Timeout occured while trying to ping server!');
+
+                if (process.env.ENABLE_SENTRY) {
+                    client.captureError(error, {extra: {body: res.body}});
+                } else {
+                    console.error(error);
+                }
+
                 return res.status(200).send({
                     id: req.body.id,
                     host: originalHost,
@@ -76,7 +82,13 @@ router.route('/query').post(function (req, res) {
 
         altping(req.body.host, req.body.port, function (err, data) {
             if (err) {
-                console.error(new Error('Error pinging using 1.7 method!'));
+                var error = new Error('Timeout occured while trying to ping server!');
+
+                if (process.env.ENABLE_SENTRY) {
+                    client.captureError(error, {extra: {body: res.body}});
+                } else {
+                    console.error(error);
+                }
 
                 startTime = Date.now();
 

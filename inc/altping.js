@@ -101,9 +101,6 @@ module.exports = function (server, port, callback, timeout) {
         try {
             callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
         } catch (e) {
-            //console.log(bufData.get().toString('utf8', bytes));
-            console.log(server + ":" + port);
-            console.error(e);
             callback(e);
         }
     });
