@@ -46,8 +46,18 @@ exports.createConnection = function (req, res, next) {
     }).then(function (conn) {
         req._rdb = conn;
         next();
-    }).error(function (res) {
-        return res.status(400).send('Couldn\'t connect to the database!');
+    }).error(function (err) {
+        if (process.env.ENABLE_SENTRY) {
+            var raven = require('raven');
+
+            var client = new raven.Client(process.env.SENTRY_DSN);
+
+            client.captureError(err, {extra: {body: res.body}});
+        } else {
+            console.error(err);
+        }
+
+        next();
     });
 };
 
