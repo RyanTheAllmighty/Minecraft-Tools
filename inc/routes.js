@@ -24,7 +24,7 @@ var dns = require('dns');
 var ping = require('mc-ping');
 var altping = require('./altping');
 var mojang = require('mojang-api');
-var r = require('rethinkdb');
+var r = require('rethinkdbdash')();
 
 if (process.env.ENABLE_SENTRY) {
     var raven = require('raven');
@@ -200,7 +200,7 @@ router.route('/uuid/to').post(function (req, res) {
         return res.status(400).send('Invalid JSON provided!');
     }
 
-    functions.usernameInUUIDTable(req.body.username, req._rdb, function (err, uuid) {
+    functions.usernameInUUIDTable(req.body.username, function (err, uuid) {
         if (err || req.body.force) {
             mojang.nameToUuid(req.body.username, function (err1, data) {
                 if (err1) {
@@ -224,12 +224,12 @@ router.route('/uuid/to').post(function (req, res) {
                 if (!err) {
                     r.table('uuid').filter({username: req.body.username}).update({
                         uuid: data[0].id
-                    }).run(req._rdb);
+                    }).run();
                 } else {
                     r.table('uuid').insert({
                         uuid: data[0].id,
                         username: data[0].name
-                    }).run(req._rdb);
+                    }).run();
                 }
 
                 return res.status(200).send({
@@ -259,7 +259,7 @@ router.route('/uuid/from').post(function (req, res) {
         return res.status(400).send('Invalid JSON provided!');
     }
 
-    functions.uuidInUUIDTable(req.body.uuid, req._rdb, function (err, username) {
+    functions.uuidInUUIDTable(req.body.uuid, function (err, username) {
         if (err || req.body.force) {
             mojang.profile(req.body.uuid, function (err1, data) {
                 if (err1) {
@@ -283,12 +283,12 @@ router.route('/uuid/from').post(function (req, res) {
                 if (!err) {
                     r.table('uuid').filter({uuid: req.body.uuid}).update({
                         uuid: data.name
-                    }).run(req._rdb);
+                    }).run();
                 } else {
                     r.table('uuid').insert({
                         uuid: data.id,
                         username: data.name
-                    }).run(req._rdb);
+                    }).run();
                 }
 
                 return res.status(200).send({

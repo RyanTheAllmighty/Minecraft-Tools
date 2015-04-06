@@ -16,8 +16,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var r = require('rethinkdb');
-
 exports.checkAuthKey = function (req, res, next) {
     if (req.body.auth != process.env.AUTH_KEY) {
         var err = new Error('Invalid auth provided!');
@@ -35,33 +33,5 @@ exports.checkAuthKey = function (req, res, next) {
         return res.status(400).send('Invalid auth provided!');
     }
 
-    next();
-};
-
-exports.createConnection = function (req, res, next) {
-    r.connect({
-        host: process.env.RETHINKDB_HOST,
-        port: process.env.RETHINKDB_PORT,
-        db: process.env.RETHINKDB_DB
-    }).then(function (conn) {
-        req._rdb = conn;
-        next();
-    }).error(function (err) {
-        if (process.env.ENABLE_SENTRY) {
-            var raven = require('raven');
-
-            var client = new raven.Client(process.env.SENTRY_DSN);
-
-            client.captureError(err, {extra: {body: res.body}});
-        } else {
-            console.error(err);
-        }
-
-        next();
-    });
-};
-
-exports.closeConnection = function (req, res, next) {
-    req._rdb.close();
     next();
 };

@@ -16,10 +16,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var r = require('rethinkdb');
+var r = require('rethinkdbdash')();
 
-exports.usernameInUUIDTable = function (username, connection, callback) {
-    r.table('uuid').filter({username: username}).run(connection, function (err, cursor) {
+exports.usernameInUUIDTable = function (username, callback) {
+    r.table('uuid').filter({username: username}).run(function (err, cursor) {
         if (err) {
             callback(err);
         }
@@ -35,7 +35,7 @@ exports.usernameInUUIDTable = function (username, connection, callback) {
 };
 
 exports.uuidInUUIDTable = function (uuid, connection, callback) {
-    r.table('uuid').filter({uuid: uuid}).run(connection, function (err, cursor) {
+    r.table('uuid').filter({uuid: uuid}).run(function (err, cursor) {
         if (err) {
             callback(err);
         }

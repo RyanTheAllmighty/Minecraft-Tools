@@ -19,7 +19,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-var r = require('rethinkdb');
+var r = require('rethinkdbdash')();
 var middleware = require('./inc/middlewares');
 
 var env = require('node-env-file');
@@ -37,54 +37,36 @@ if (process.env.ENABLE_SENTRY) {
 app.use(bodyParser.json());
 
 app.use(middleware.checkAuthKey);
-app.use(middleware.createConnection);
 app.use('/', require('./inc/routes'));
-app.use(middleware.closeConnection);
 
-r.connect({
-    host: process.env.RETHINKDB_HOST,
-    port: process.env.RETHINKDB_PORT
-}, function (err, conn) {
+
+r.dbCreate('minecraft_tools').run(function (err) {
     if (err) {
-        if (process.env.ENABLE_SENTRY) {
-            client.captureError(err)
-        } else {
-            console.error(err);
-        }
-
-        return;
+        console.log('minecraft_tools database already exists, no need to create it!');
+    } else {
+        console.log('Created the minecraft_tools database!');
     }
+});
 
-    r.dbCreate('minecraft_tools').run(conn, function (err) {
-        if (err) {
-            console.log('minecraft_tools database already exists, no need to create it!');
-        } else {
-            console.log('Created the minecraft_tools database!');
-        }
-    });
+r.db('minecraft_tools').tableCreate('uuid').run(function (err) {
+    if (err) {
+        console.log('uuid table already exists, no need to create it!');
+    } else {
+        console.log('Created the uuid table!');
+    }
+});
 
-    r.db('minecraft_tools').tableCreate('uuid').run(conn, function (err) {
-        if (err) {
-            console.log('uuid table already exists, no need to create it!');
-        } else {
-            console.log('Created the uuid table!');
-        }
-    });
+r.db('minecraft_tools').table('uuid').indexCreate('username').run(function (err) {
+    if (err) {
+        console.log('username already an index, no need to add it!');
+    } else {
+        console.log('Added the username as an index!');
+    }
+});
 
-    r.db('minecraft_tools').table('uuid').indexCreate('username').run(conn, function (err) {
-        if (err) {
-            console.log('username already an index, no need to add it!');
-        } else {
-            console.log('Added the username as an index!');
-        }
-    });
+var server = app.listen(process.env.SERVER_PORT, function () {
+    var host = server.address().address;
+    var port = server.address().port;
 
-    var server = app.listen(process.env.SERVER_PORT, function () {
-        var host = server.address().address;
-        var port = server.address().port;
-
-        console.log('Listening at http://%s:%s', host, port);
-    });
-
-    conn.close();
+    console.log('Listening at http://%s:%s', host, port);
 });

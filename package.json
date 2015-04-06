@@ -12,7 +12,7 @@
     "mojang-api": "0.0.1",
     "node-env-file": "^0.1.7",
     "raven": "^0.7.3",
-    "rethinkdb": "^1.16.2",
+    "rethinkdbdash": "^1.16.13",
     "varint": "^4.0.0",
     "votifier-send": "git://github.com/RyanTheAllmighty/votifier-send.git"
   },
