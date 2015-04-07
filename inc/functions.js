@@ -19,33 +19,25 @@
 var r = require('rethinkdbdash')();
 
 exports.usernameInUUIDTable = function (username, callback) {
-    r.table('uuid').filter({username: username}).run(function (err, cursor) {
-        if (err) {
-            callback(err);
+    r.table('uuid').filter({username: username}).run().then(function (data) {
+        if (data.length == 0) {
+            callback(new Error('Username doesn\'t exist in the UUID table!'));
+        } else {
+            callback(null, data[0].uuid);
         }
-
-        cursor.next(function (err, row) {
-            if (err) {
-                callback(new Error('Username doesn\'t exist in the UUID table!'));
-            } else {
-                callback(null, row.uuid);
-            }
-        });
+    }).error(function (err) {
+        callback(err);
     });
 };
 
 exports.uuidInUUIDTable = function (uuid, connection, callback) {
-    r.table('uuid').filter({uuid: uuid}).run(function (err, cursor) {
-        if (err) {
-            callback(err);
+    r.table('uuid').filter({uuid: uuid}).run().then(function (data) {
+        if (data.length == 0) {
+            callback(new Error('UUID doesn\'t exist in the UUID table!'));
+        } else {
+            callback(null, data[0].username);
         }
-
-        cursor.next(function (err, row) {
-            if (err) {
-                callback(new Error('UUID doesn\'t exist in the UUID table!'));
-            } else {
-                callback(null, row.username);
-            }
-        });
+    }).error(function (err) {
+        callback(err);
     });
 };
