@@ -27,7 +27,7 @@ var altping = require('./altping');
 var mojang = require('mojang-api');
 var r = require('rethinkdbdash')();
 
-if (process.env.ENABLE_SENTRY) {
+if (process.env.ENABLE_SENTRY === 'true') {
     var raven = require('raven');
 
     var client = new raven.Client(process.env.SENTRY_DSN);
@@ -37,7 +37,7 @@ router.route('/query').post(function (req, res) {
     if (!validators.queryValidator(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
-        if (process.env.ENABLE_SENTRY) {
+        if (process.env.ENABLE_SENTRY === 'true') {
             client.captureError(err, {extra: {body: res.body}});
         } else {
             console.error(err);
@@ -50,12 +50,14 @@ router.route('/query').post(function (req, res) {
         var originalHost = req.body.host;
         var originalPort = req.body.port;
 
-        if (data && data[0] && data[0].port) {
+        if (data && data.length != 0) {
             if (data[0].name) {
                 req.body.host = data[0].name;
             }
 
-            req.body.port = data[0].port;
+            if (data[0].port) {
+                req.body.port = data[0].port;
+            }
         }
 
         var startTime = Date.now();
@@ -64,7 +66,7 @@ router.route('/query').post(function (req, res) {
             if (!res.headersSent) {
                 var error = new Error('Timeout occured while trying to ping server!');
 
-                if (process.env.ENABLE_SENTRY) {
+                if (process.env.ENABLE_SENTRY === 'true') {
                     client.captureError(error, {extra: {body: res.body}});
                 } else {
                     console.error(error);
@@ -76,26 +78,26 @@ router.route('/query').post(function (req, res) {
                     port: originalPort,
                     online: false,
                     time_taken: Date.now() - startTime,
-                    reason: "Timeout occurred!"
+                    reason: error.message
                 });
             }
-        }, (req.body.timeout || 5000) * 2);
+        }, (req.body.timeout || 5000) * 2.5);
 
         altping(req.body.host, req.body.port, function (err, data) {
+            console.log(1);
             if (err) {
-                var error = new Error('Timeout occured while trying to ping server!');
-
-                if (process.env.ENABLE_SENTRY) {
-                    client.captureError(error, {extra: {body: res.body}});
+                if (process.env.ENABLE_SENTRY === 'true') {
+                    client.captureError(err, {extra: {body: res.body}});
                 } else {
-                    console.error(error);
+                    console.error(err);
                 }
 
                 startTime = Date.now();
 
                 ping(req.body.host, req.body.port, function (err1, data1) {
+                    console.log(2);
                     if (err1) {
-                        if (process.env.ENABLE_SENTRY) {
+                        if (process.env.ENABLE_SENTRY === 'true') {
                             client.captureError(err1)
                         } else {
                             console.error(err1);
@@ -155,7 +157,7 @@ router.route('/vote').post(function (req, res) {
     if (!validators.voteValidator(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
-        if (process.env.ENABLE_SENTRY) {
+        if (process.env.ENABLE_SENTRY === 'true') {
             client.captureError(err, {extra: {body: res.body}});
         } else {
             console.error(err);
@@ -173,7 +175,7 @@ router.route('/vote').post(function (req, res) {
         }
     }, function (err) {
         if (err) {
-            if (process.env.ENABLE_SENTRY) {
+            if (process.env.ENABLE_SENTRY === 'true') {
                 client.captureError(err)
             } else {
                 console.error(err);
@@ -192,7 +194,7 @@ router.route('/uuid/to').post(function (req, res) {
     if (!validators.uuidValidator.to(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
-        if (process.env.ENABLE_SENTRY) {
+        if (process.env.ENABLE_SENTRY === 'true') {
             client.captureError(err, {extra: {body: res.body}});
         } else {
             console.error(err);
@@ -205,7 +207,7 @@ router.route('/uuid/to').post(function (req, res) {
         if (err || req.body.force) {
             mojang.nameToUuid(req.body.username, function (err1, data) {
                 if (err1) {
-                    if (process.env.ENABLE_SENTRY) {
+                    if (process.env.ENABLE_SENTRY === 'true') {
                         client.captureError(err1)
                     } else {
                         console.error(err1);
@@ -251,7 +253,7 @@ router.route('/uuid/from').post(function (req, res) {
     if (!validators.uuidValidator.from(req.body)) {
         var err = new Error('Invalid JSON provided!');
 
-        if (process.env.ENABLE_SENTRY) {
+        if (process.env.ENABLE_SENTRY === 'true') {
             client.captureError(err, {extra: {body: res.body}});
         } else {
             console.error(err);
@@ -264,7 +266,7 @@ router.route('/uuid/from').post(function (req, res) {
         if (err || req.body.force) {
             mojang.profile(req.body.uuid, function (err1, data) {
                 if (err1) {
-                    if (process.env.ENABLE_SENTRY) {
+                    if (process.env.ENABLE_SENTRY === 'true') {
                         client.captureError(err1)
                     } else {
                         console.error(err1);

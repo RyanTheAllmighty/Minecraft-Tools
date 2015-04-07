@@ -57,10 +57,10 @@ module.exports = function (server, port, callback, timeout) {
     });
 
     socket.setTimeout(timeout, function () {
-        callback(new Error("Socket timed out when connecting to " + server + ":" + port));
-
         socket.end();
         socket.destroy();
+
+        callback(new Error("Socket timed out when connecting to " + server + ":" + port));
     });
 
     var bufData = new BufferBuilder();

@@ -27,7 +27,7 @@ env(__dirname + '/.env');
 
 var app = express();
 
-if (process.env.ENABLE_SENTRY) {
+if (process.env.ENABLE_SENTRY === 'true') {
     var raven = require('raven');
 
     var client = new raven.Client(process.env.SENTRY_DSN);
