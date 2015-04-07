@@ -84,7 +84,6 @@ router.route('/query').post(function (req, res) {
         }, (req.body.timeout || 5000) * 2.5);
 
         altping(req.body.host, req.body.port, function (err, data) {
-            console.log(1);
             if (err) {
                 if (process.env.ENABLE_SENTRY === 'true') {
                     client.captureError(err, {extra: {body: res.body}});
@@ -95,7 +94,6 @@ router.route('/query').post(function (req, res) {
                 startTime = Date.now();
 
                 ping(req.body.host, req.body.port, function (err1, data1) {
-                    console.log(2);
                     if (err1) {
                         if (process.env.ENABLE_SENTRY === 'true') {
                             client.captureError(err1)
