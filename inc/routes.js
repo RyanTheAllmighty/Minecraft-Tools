@@ -83,28 +83,16 @@ router.route('/query').post(function (req, res) {
                     reason: error.message
                 });
             }
-        }, req.body.timeout || 5000);
+        }, (req.body.timeout || 5000) * 2.5);
 
-        ping(req.body.host, req.body.port, function (err1, data1) {
-            if (err1) {
+        altping(req.body.host, req.body.port, function (err, data) {
+            if (err) {
                 if (process.env.ENABLE_SENTRY === 'true') {
-                    client.captureError(err1)
+                    client.captureError(err, {extra: {body: res.body}});
                 } else {
-                    console.error(err1);
+                    console.error(err);
                 }
 
-                if (!res.headersSent) {
-                    return res.status(200).send({
-                        id: req.body.id,
-                        host: originalHost,
-                        port: originalPort,
-                        online: false,
-                        time_taken: Date.now() - startTime,
-                        reason: err1.message,
-                        new_method: false
-                    });
-                }
-            } else {
                 if (!res.headersSent) {
                     return res.status(200).send({
                         id: req.body.id,
@@ -118,6 +106,22 @@ router.route('/query').post(function (req, res) {
                             max: parseInt(data1.max_players)
                         },
                         new_method: false
+                    });
+                }
+            } else {
+                if (!res.headersSent) {
+                    return res.status(200).send({
+                        id: req.body.id,
+                        host: originalHost,
+                        port: originalPort,
+                        online: true,
+                        time_taken: Date.now() - startTime,
+                        motd: data.description,
+                        players: {
+                            online: parseInt(data.players.online),
+                            max: parseInt(data.players.max)
+                        },
+                        new_method: true
                     });
                 }
             }
