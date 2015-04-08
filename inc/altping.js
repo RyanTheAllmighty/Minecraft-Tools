@@ -71,36 +71,39 @@ module.exports = function (server, port, callback, timeout) {
         // Check for the end of the data being 2 } and then close the socket
         if (data[data.length - 1] == 125 && data[data.length - 2] == 125) {
             socket.end();
-            socket.destroy();
+        }
+    });
 
-            if (bufData.get().length == 0) {
-                return callback(new Error('Server didn\'t respond with any data!'));
-            }
+    socket.once('end', function () {
+        socket.destroy();
 
-            // Bytes we've read so far.
-            var bytes = 0;
+        if (bufData.get().length == 0) {
+            return callback(new Error('Server didn\'t respond with any data!'));
+        }
 
-            // The entire length of the data received.
-            var length = varint.decode(bufData.get());
-            bytes += varint.decode.bytes;
+        // Bytes we've read so far.
+        var bytes = 0;
 
-            // The type of response it is. 0 is for status response.
-            var type = varint.decode(bufData.get(), bytes);
-            bytes += varint.decode.bytes;
+        // The entire length of the data received.
+        var length = varint.decode(bufData.get());
+        bytes += varint.decode.bytes;
 
-            // The length of the next portion of data which is the response data. This is unused.
-            var length2 = varint.decode(bufData.get(), bytes);
-            bytes += varint.decode.bytes;
+        // The type of response it is. 0 is for status response.
+        var type = varint.decode(bufData.get(), bytes);
+        bytes += varint.decode.bytes;
 
-            if (type != 0) {
-                return callback(new Error('Server responded with an invalid status response!'));
-            }
+        // The length of the next portion of data which is the response data. This is unused.
+        var length2 = varint.decode(bufData.get(), bytes);
+        bytes += varint.decode.bytes;
 
-            try {
-                return callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
-            } catch (e) {
-                return callback(e);
-            }
+        if (type != 0) {
+            return callback(new Error('Server responded with an invalid status response!'));
+        }
+
+        try {
+            return callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
+        } catch (e) {
+            return callback(e);
         }
     });
 
