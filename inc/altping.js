@@ -60,7 +60,7 @@ module.exports = function (server, port, callback, timeout) {
         socket.end();
         socket.destroy();
 
-        callback(new Error("Socket timed out when connecting to " + server + ":" + port));
+        return callback(new Error("Socket timed out when connecting to " + server + ":" + port));
     });
 
     var bufData = new BufferBuilder();
@@ -99,13 +99,16 @@ module.exports = function (server, port, callback, timeout) {
         }
 
         try {
-            callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
+            return callback(null, JSON.parse(bufData.get().toString('utf8', bytes)));
         } catch (e) {
-            callback(e);
+            return callback(e);
         }
     });
 
     socket.once('error', function (e) {
-        callback(e);
+        socket.end();
+        socket.destroy();
+
+        return callback(e);
     });
 };
