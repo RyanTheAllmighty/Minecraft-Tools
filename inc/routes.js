@@ -47,16 +47,18 @@ router.route('/query').post(function (req, res) {
     }
 
     dns.resolveSrv('_minecraft._tcp.' + req.body.host, function (err, data) {
-        var originalHost = req.body.host;
-        var originalPort = req.body.port;
+        if (!err) {
+            var originalHost = req.body.host;
+            var originalPort = req.body.port;
 
-        if (data && data.length != 0) {
-            if (data[0].name) {
-                req.body.host = data[0].name;
-            }
+            if (data && data.length != 0) {
+                if (data[0].name) {
+                    req.body.host = data[0].name;
+                }
 
-            if (data[0].port) {
-                req.body.port = data[0].port;
+                if (data[0].port) {
+                    req.body.port = data[0].port;
+                }
             }
         }
 
