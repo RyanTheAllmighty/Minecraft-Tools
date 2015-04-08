@@ -98,13 +98,9 @@ router.route('/query').post(function (req, res) {
                         id: req.body.id,
                         host: originalHost,
                         port: originalPort,
-                        online: true,
+                        online: false,
                         time_taken: Date.now() - startTime,
-                        motd: data1.server_name,
-                        players: {
-                            online: parseInt(data1.num_players),
-                            max: parseInt(data1.max_players)
-                        },
+                        reason: err.message,
                         new_method: false
                     });
                 }
