@@ -83,55 +83,27 @@ router.route('/query').post(function (req, res) {
                     reason: error.message
                 });
             }
-        }, (req.body.timeout || 5000) * 2.5);
+        }, (req.body.timeout || 5000) * 1.5);
 
-        altping(req.body.host, req.body.port, function (err, data) {
-            if (err) {
+        ping(req.body.host, req.body.port, function (err1, data1) {
+            if (err1) {
                 if (process.env.ENABLE_SENTRY === 'true') {
-                    client.captureError(err, {extra: {body: res.body}});
+                    client.captureError(err1)
                 } else {
-                    console.error(err);
+                    console.error(err1);
                 }
 
-                startTime = Date.now();
-
-                ping(req.body.host, req.body.port, function (err1, data1) {
-                    if (err1) {
-                        if (process.env.ENABLE_SENTRY === 'true') {
-                            client.captureError(err1)
-                        } else {
-                            console.error(err1);
-                        }
-
-                        if (!res.headersSent) {
-                            return res.status(200).send({
-                                id: req.body.id,
-                                host: originalHost,
-                                port: originalPort,
-                                online: false,
-                                time_taken: Date.now() - startTime,
-                                reason: err1.message,
-                                new_method: false
-                            });
-                        }
-                    } else {
-                        if (!res.headersSent) {
-                            return res.status(200).send({
-                                id: req.body.id,
-                                host: originalHost,
-                                port: originalPort,
-                                online: true,
-                                time_taken: Date.now() - startTime,
-                                motd: data1.server_name,
-                                players: {
-                                    online: parseInt(data1.num_players),
-                                    max: parseInt(data1.max_players)
-                                },
-                                new_method: false
-                            });
-                        }
-                    }
-                }, req.body.timeout);
+                if (!res.headersSent) {
+                    return res.status(200).send({
+                        id: req.body.id,
+                        host: originalHost,
+                        port: originalPort,
+                        online: false,
+                        time_taken: Date.now() - startTime,
+                        reason: err1.message,
+                        new_method: false
+                    });
+                }
             } else {
                 if (!res.headersSent) {
                     return res.status(200).send({
@@ -140,12 +112,12 @@ router.route('/query').post(function (req, res) {
                         port: originalPort,
                         online: true,
                         time_taken: Date.now() - startTime,
-                        motd: data.description,
+                        motd: data1.server_name,
                         players: {
-                            online: parseInt(data.players.online),
-                            max: parseInt(data.players.max)
+                            online: parseInt(data1.num_players),
+                            max: parseInt(data1.max_players)
                         },
-                        new_method: true
+                        new_method: false
                     });
                 }
             }
