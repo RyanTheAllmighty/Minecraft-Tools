@@ -130,7 +130,7 @@ router.route('/vote').post(function (req, res) {
         var err = new Error('Invalid JSON provided!');
 
         if (process.env.ENABLE_SENTRY === 'true') {
-            client.captureError(err, {extra: {body: res.body}});
+            client.captureError(err, {extra: {body: req.body}});
         } else {
             console.error(err);
         }
@@ -144,7 +144,7 @@ router.route('/vote').post(function (req, res) {
         var err1 = new Error('Invalid votifier key provided!');
 
         if (process.env.ENABLE_SENTRY === 'true') {
-            client.captureError(err1, {extra: {body: res.body}});
+            client.captureError(err1, {extra: {body: req.body}});
         } else {
             console.error(err1);
         }
