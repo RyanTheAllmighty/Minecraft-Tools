@@ -154,6 +154,8 @@ router.route('/vote').post(function (req, res) {
         });
     }
 
+    client.captureMessage('Sending votifier vote!', {extra: {body: req.body}});
+
     votifier.send({
         key: req.body.key,
         host: req.body.host,
