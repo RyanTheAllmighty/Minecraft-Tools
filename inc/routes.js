@@ -134,6 +134,24 @@ router.route('/vote').post(function (req, res) {
         } else {
             console.error(err);
         }
+
+        return res.status(200).send({
+            sent: false
+        });
+    }
+
+    if(!require('validator').isBase64(req.body.key)) {
+        var err1 = new Error('Invalid votifier key provided!');
+
+        if (process.env.ENABLE_SENTRY === 'true') {
+            client.captureError(err1, {extra: {body: res.body}});
+        } else {
+            console.error(err1);
+        }
+
+        return res.status(200).send({
+            sent: false
+        });
     }
 
     votifier.send({
